@@ -19,6 +19,11 @@ type Authentication struct {
 }
 
 type AuthenticationSpec struct {
+	// type identifies the cluster managed, user facing authentication mode in use.
+	// Specifically, it manages the component that responds to login attempts.
+	// The default is IntegratedOAuth.
+	Type AuthenticationType `json:"type"`
+
 	// oauthMetadata contains the discovery endpoint data for OAuth 2.0
 	// Authorization Server Metadata for an external OAuth server.
 	// This discovery document can be viewed from its served location:
@@ -57,6 +62,22 @@ type AuthenticationList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Authentication `json:"items"`
 }
+
+type AuthenticationType string
+
+const (
+	// None means that no cluster managed authentication system is in place.
+	// Note that user login will only work if a manually configured system is in place and
+	// referenced in authentication spec via oauthMetadata and webhookTokenAuthenticators.
+	AuthenticationTypeNone AuthenticationType = "None"
+
+	// IntegratedOAuth refers to the cluster managed OAuth server.
+	// It is configured via the top level OAuth config.
+	AuthenticationTypeIntegratedOAuth AuthenticationType = "IntegratedOAuth"
+
+	// TODO if we add support for an in-cluster operator managed Keycloak instance
+	// AuthenticationTypeKeycloak AuthenticationType = "Keycloak"
+)
 
 // webhookTokenAuthenticator holds the necessary configuration options for a remote token authenticator
 type WebhookTokenAuthenticator struct {

@@ -43,8 +43,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&DNS{},
 		&DNSList{},
 		&GenericControllerConfig{},
-		&IdentityProvider{},
-		&IdentityProviderList{},
 		&Image{},
 		&ImageList{},
 		&Infrastructure{},
