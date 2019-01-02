@@ -5,19 +5,25 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// ConfigMapReference references a configmap in the openshift-config namespace.
-type ConfigMapReference struct {
+// ConfigMapFileReference references a configmap in the openshift-config namespace.
+type ConfigMapFileReference struct {
 	Name string `json:"name"`
 	// Key allows pointing to a specific key/value inside of the configmap.  This is useful for logical file references.
 	Key string `json:"key,omitempty"`
 }
 
-// LocalSecretReference references a secret within the local namespace
-type LocalSecretReference struct {
-	// Name of the secret in the local namespace
+// ConfigMapNameReference references a config map in a specific namespace.
+// If a namespace is not specified at the point of use, the openshift-config namespace is assumed.
+type ConfigMapNameReference struct {
+	// name is the metadata.name of the referenced config map
 	Name string `json:"name"`
-	// Key selects a specific key within the local secret. Must be a valid secret key.
-	Key string `json:"key,omitempty"`
+}
+
+// SecretNameReference references a secret in a specific namespace.
+// If a namespace is not specified at the point of use, the openshift-config namespace is assumed.
+type SecretNameReference struct {
+	// name is the metadata.name of the referenced secret
+	Name string `json:"name"`
 }
 
 // HTTPServingInfo holds configuration for serving HTTP

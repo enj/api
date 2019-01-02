@@ -19,34 +19,58 @@ type Authentication struct {
 }
 
 type AuthenticationSpec struct {
+	// type identifies the cluster managed, user facing authentication mode in use.
+	// Specifically, it manages the component that responds to login attempts.
+	// The default is IntegratedOAuth.
+	Type AuthenticationType `json:"type"`
+
 	// oauthMetadata contains the discovery endpoint data for OAuth 2.0
 	// Authorization Server Metadata for an external OAuth server.
 	// This discovery document can be viewed from its served location:
 	// oc get --raw '/.well-known/oauth-authorization-server'
 	// For further details, see the IETF Draft:
 	// https://tools.ietf.org/html/draft-ietf-oauth-discovery-04#section-2
-	// If oauthMetadata.name is non-empty, this value has precedence
-	// over the observed value stored in status.oauthMetadata
+	// If oauthMetadata.name is non-empty, this value is used to
+	// calculate the observed value stored in status.oauthMetadata.
+	// Otherwise, observed cluster state may be used to populate status.oauthMetadata.
+	// The key "oauthMetadata" is used to locate the data.
+	// If specified and the config map or expected key is not found, no metadata is served.
+	// If the specified metadata is not valid, no metadata is served.
 	// +optional
-	OAuthMetadata ConfigMapReference `json:"oauthMetadata"`
+	OAuthMetadata ConfigMapNameReference `json:"oauthMetadata"`
 
 	// webhookTokenAuthenticators configures remote token reviewers.
 	// These remote authentication webhooks can be used to verify bearer tokens
 	// via the tokenreviews.authentication.k8s.io REST API.  This is required to
 	// honor bearer tokens that are provisioned by an external authentication service.
+	// If this list is non-empty, it is used to calculate the
+	// observed value stored in status.webhookTokenAuthenticators.
+	// Otherwise, observed cluster state may be used to populate status.webhookTokenAuthenticators.
+	// +optional
 	WebhookTokenAuthenticators []WebhookTokenAuthenticator `json:"webhookTokenAuthenticators"`
 }
 
 type AuthenticationStatus struct {
+	// type identifies the current user facing authentication mode in use.
+	// See authentication spec.type.
+	Type AuthenticationType `json:"type"`
+
 	// oauthMetadata contains the discovery endpoint data for OAuth 2.0
 	// Authorization Server Metadata for an external OAuth server.
-	// This discovery document can be viewed from its served location:
-	// oc get --raw '/.well-known/oauth-authorization-server'
-	// For further details, see the IETF Draft:
-	// https://tools.ietf.org/html/draft-ietf-oauth-discovery-04#section-2
-	// This contains the observed value based on cluster state.
-	// An explicitly set value in spec.oauthMetadata has precedence over this field.
-	OAuthMetadata ConfigMapReference `json:"oauthMetadata"`
+	// See authentication spec.oauthMetadata.
+	// This contains the observed value based on cluster state or
+	// an explicitly set value in spec.oauthMetadata.
+	// The namespace for this config map is openshift-config-managed.
+	OAuthMetadata ConfigMapNameReference `json:"oauthMetadata"`
+
+	// webhookTokenAuthenticators identifies the current remote token reviewers.
+	// See authentication spec.webhookTokenAuthenticators.
+	// This contains the observed value based on cluster state or
+	// an explicitly set value in spec.webhookTokenAuthenticators.
+	// The namespace for referenced config maps is openshift-config-managed.
+	WebhookTokenAuthenticators []WebhookTokenAuthenticator `json:"webhookTokenAuthenticators"`
+
+	// TODO we may need a list of Conditions to communicate failure
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -55,13 +79,41 @@ type AuthenticationList struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Authentication `json:"items"`
+
+	Items []Authentication `json:"items"`
 }
+
+type AuthenticationType string
+
+const (
+	// None means that no cluster managed authentication system is in place.
+	// Note that user login will only work if a manually configured system is in place and
+	// referenced in authentication spec via oauthMetadata and webhookTokenAuthenticators.
+	AuthenticationTypeNone AuthenticationType = "None"
+
+	// IntegratedOAuth refers to the cluster managed OAuth server.
+	// It is configured via the top level OAuth config.
+	AuthenticationTypeIntegratedOAuth AuthenticationType = "IntegratedOAuth"
+
+	// TODO if we add support for an in-cluster operator managed Keycloak instance
+	// AuthenticationTypeKeycloak AuthenticationType = "Keycloak"
+)
 
 // webhookTokenAuthenticator holds the necessary configuration options for a remote token authenticator
 type WebhookTokenAuthenticator struct {
 	// kubeConfig contains kube config file data which describes how to access the remote webhook service.
 	// For further details, see:
 	// https://kubernetes.io/docs/reference/access-authn-authz/authentication/#webhook-token-authentication
-	KubeConfig LocalSecretReference `json:"kubeConfig"`
+	// The key "kubeConfig" is used to locate the data.
+	// If the secret or expected key is not found, the webhook is not honored.
+	// If the specified kube config data is not valid, the webhook is not honored.
+	KubeConfig SecretNameReference `json:"kubeConfig"`
 }
+
+const (
+	// OAuthMetadataKey is the key for the oauth authorization server metadata
+	OAuthMetadataKey = "oauthMetadata"
+
+	// KubeConfigKey is the key for the kube config file data in a secret
+	KubeConfigKey = "kubeConfig"
+)
