@@ -195,7 +195,7 @@ type IdentityProviderConfig struct {
 	// +optional
 	BasicAuth *BasicAuthIdentityProvider `json:"basicAuth,omitempty"`
 
-	// github enables  user authentication using GitHub credentials
+	// github enables user authentication using GitHub credentials
 	// +optional
 	GitHub *GitHubIdentityProvider `json:"github,omitempty"`
 
@@ -455,8 +455,8 @@ type OpenIDIdentityProvider struct {
 	// The key "clientSecret" is used to locate the data.
 	ClientSecret string `json:"clientSecret"`
 
-	// ca is a reference to a config map by name containing an optional trusted certificate authority bundle
-	// to use when making requests to the server.
+	// ca is an optional reference to a config map by name containing the PEM-encoded CA bundle.
+	// It is used as a trust anchor to validate the TLS certificate presented by the remote server.
 	// The key "ca.crt" is used to locate the data.
 	// If empty, the default system roots are used.
 	// +optional
