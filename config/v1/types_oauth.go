@@ -1,8 +1,6 @@
 package v1
 
-import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // OAuth Server and Identity Provider Config
 
@@ -16,8 +14,10 @@ import (
 type OAuth struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              OAuthSpec   `json:"spec"`
-	Status            OAuthStatus `json:"status"`
+
+	Spec OAuthSpec `json:"spec"`
+
+	Status OAuthStatus `json:"status"`
 }
 
 // OAuthSpec contains desired cluster auth configuration
@@ -25,7 +25,7 @@ type OAuthSpec struct {
 	// identityProviders is an ordered list of ways for a user to identify themselves.
 	// When this list is empty, no identities are provisioned for users.
 	// +optional
-	IdentityProviders []IdentityProvider `json:"identityProviders"`
+	IdentityProviders []IdentityProvider `json:"identityProviders,omitempty"`
 
 	// tokenConfig contains options for authorization and access tokens
 	TokenConfig TokenConfig `json:"tokenConfig"`
@@ -44,8 +44,10 @@ type OAuthStatus struct {
 type TokenConfig struct {
 	// authorizeTokenMaxAgeSeconds defines the maximum age of authorize tokens
 	AuthorizeTokenMaxAgeSeconds int32 `json:"authorizeTokenMaxAgeSeconds"`
+
 	// accessTokenMaxAgeSeconds defines the maximum age of access tokens
 	AccessTokenMaxAgeSeconds int32 `json:"accessTokenMaxAgeSeconds"`
+
 	// accessTokenInactivityTimeoutSeconds defines the default token
 	// inactivity timeout for tokens granted by any client.
 	// The value represents the maximum amount of time that can occur between
@@ -64,8 +66,10 @@ type TokenConfig struct {
 const (
 	// LoginTemplateKey is the key of the login template in a secret
 	LoginTemplateKey = "login.html"
+
 	// ProviderSelectionTemplateKey is the key for the provider selection template in a secret
 	ProviderSelectionTemplateKey = "providers.html"
+
 	// ErrorsTemplateKey is the key for the errors template in a secret
 	ErrorsTemplateKey = "errors.html"
 
@@ -96,7 +100,7 @@ type OAuthTemplates struct {
 
 	// error is the name of a secret that specifies a go template to use to render error pages
 	// during the authentication or grant flow.
-	// The key "errrors.html" is used to locate the template data.
+	// The key "errors.html" is used to locate the template data.
 	// If unspecified, the default error page is used.
 	// +optional
 	Error string `json:"error,omitempty"`
@@ -112,6 +116,7 @@ type IdentityProvider struct {
 
 	// challenge indicates whether to issue WWW-Authenticate challenges for this provider
 	UseAsChallenger bool `json:"challenge"`
+
 	// login indicates whether to use this identity provider for unauthenticated browsers to login against
 	UseAsLogin bool `json:"login"`
 
@@ -219,6 +224,7 @@ type IdentityProviderConfig struct {
 	OpenID *OpenIDIdentityProvider `json:"openID,omitempty"`
 
 	// requestHeader enables user authentication using request header credentials
+	// +optional
 	RequestHeader *RequestHeaderIdentityProvider `json:"requestHeader,omitempty"`
 }
 
@@ -232,6 +238,7 @@ type BasicAuthIdentityProvider struct {
 type OAuthRemoteConnectionInfo struct {
 	// url is the remote URL to connect to
 	URL string `json:"url"`
+
 	// ca is a reference to a config map by name containing the CA for verifying TLS connections.
 	// The key "ca.crt" is used to locate the data.
 	CA string `json:"ca"`
@@ -296,15 +303,18 @@ type LDAPAttributeMapping struct {
 	// attribute have a value, authentication fails.
 	// LDAP standard identity attribute is "dn"
 	ID []string `json:"id"`
+
 	// preferredUsername is the list of attributes whose values should be used as the preferred username.
 	// LDAP standard login attribute is "uid"
 	// +optional
 	PreferredUsername []string `json:"preferredUsername"`
+
 	// name is the list of attributes whose values should be used as the display name. Optional.
 	// If unspecified, no display name is set for the identity
 	// LDAP standard display name attribute is "cn"
 	// +optional
 	Name []string `json:"name"`
+
 	// email is the list of attributes whose values should be used as the email address. Optional.
 	// If unspecified, no email is set for the identity
 	// +optional
@@ -315,8 +325,10 @@ type LDAPAttributeMapping struct {
 type KeystoneIdentityProvider struct {
 	// OAuthRemoteConnectionInfo contains information about how to connect to the keystone server
 	OAuthRemoteConnectionInfo `json:",inline"`
+
 	// domainName is required for keystone v3
 	DomainName string `json:"domainName"`
+
 	// useUsernameIdentity indicates that users should be authenticated by username, not keystone ID
 	// DEPRECATED - only use this option for legacy systems to ensure backwards compatibility
 	// +optional
@@ -469,8 +481,10 @@ type OpenIDIdentityProvider struct {
 type OpenIDURLs struct {
 	// authorize is the oauth authorization URL
 	Authorize string `json:"authorize"`
+
 	// token is the oauth token granting URL
 	Token string `json:"token"`
+
 	// userInfo is the optional userinfo URL.
 	// If present, a granted access_token is used to request claims
 	// If empty, a granted id_token is parsed for claims
@@ -493,10 +507,12 @@ type OpenIDClaims struct {
 	// If unspecified, the preferred username is determined from the value of the sub claim
 	// +optional
 	PreferredUsername []string `json:"preferredUsername"`
+
 	// name is the list of claims whose values should be used as the display name. Optional.
 	// If unspecified, no display name is set for the identity
 	// +optional
 	Name []string `json:"name"`
+
 	// email is the list of claims whose values should be used as the email address. Optional.
 	// If unspecified, no email is set for the identity
 	// +optional
@@ -504,8 +520,10 @@ type OpenIDClaims struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 type OAuthList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OAuth `json:"items"`
+
+	Items []OAuth `json:"items"`
 }
