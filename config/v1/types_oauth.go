@@ -87,23 +87,26 @@ const (
 type OAuthTemplates struct {
 	// login is the name of a secret that specifies a go template to use to render the login page.
 	// The key "login.html" is used to locate the template data.
+	// If specified and the secret or expected key is not found, the default login page is used.
 	// If unspecified, the default login page is used.
 	// +optional
-	Login string `json:"login,omitemtpy"`
+	Login OAuthSecretReference `json:"login,omitemtpy"`
 
 	// providerSelection is the name of a secret that specifies a go template to use to render
 	// the provider selection page.
 	// The key "providers.html" is used to locate the template data.
+	// If specified and the secret or expected key is not found, the default provider selection page is used.
 	// If unspecified, the default provider selection page is used.
 	// +optional
-	ProviderSelection string `json:"providerSelection,omitempty"`
+	ProviderSelection OAuthSecretReference `json:"providerSelection,omitempty"`
 
 	// error is the name of a secret that specifies a go template to use to render error pages
 	// during the authentication or grant flow.
 	// The key "errors.html" is used to locate the template data.
+	// If specified and the secret or expected key is not found, the default error page is used.
 	// If unspecified, the default error page is used.
 	// +optional
-	Error string `json:"error,omitempty"`
+	Error OAuthSecretReference `json:"error,omitempty"`
 }
 
 // IdentityProvider provides identities for users authenticating using credentials
@@ -151,9 +154,6 @@ const (
 type IdentityProviderType string
 
 const (
-	// IdentityProviderTypeAllowAll provides identities for all users authenticating using non-empty passwords
-	IdentityProviderTypeAllowAll IdentityProviderType = "AllowAll"
-
 	// IdentityProviderTypeBasicAuth provides identities for users authenticating with HTTP Basic Auth
 	IdentityProviderTypeBasicAuth IdentityProviderType = "BasicAuth"
 
@@ -239,26 +239,33 @@ type OAuthRemoteConnectionInfo struct {
 	// url is the remote URL to connect to
 	URL string `json:"url"`
 
-	// ca is a reference to a config map by name containing the CA for verifying TLS connections.
+	// ca is an optional reference to a config map by name containing the PEM-encoded CA bundle.
+	// It is used as a trust anchor to validate the TLS certificate presented by the remote server.
 	// The key "ca.crt" is used to locate the data.
-	CA string `json:"ca"`
+	// If specified and the config map or expected key is not found, the default system roots are used.
+	// If empty, the default system roots are used.
+	// +optional
+	CA OAuthConfigMapReference `json:"ca"`
 
 	// tlsClientCert references a secret by name that contains the PEM-encoded
 	// TLS client certificate to present when connecting to the server.
 	// The key "tls.crt" is used to locate the data.
-	TLSClientCert string `json:"tlsClientCert"`
+	// If specified and the secret or expected key is not found, the identity provider is not honored.
+	TLSClientCert OAuthSecretReference `json:"tlsClientCert"`
 
 	// tlsClientKey references a secret by name that contains the PEM-encoded
 	// TLS private key for the client certificate referenced in tlsClientCert.
 	// The key "tls.key" is used to locate the data.
-	TLSClientKey string `json:"tlsClientKey"`
+	// If specified and the secret or expected key is not found, the identity provider is not honored.
+	TLSClientKey OAuthSecretReference `json:"tlsClientKey"`
 }
 
 // HTPasswdPasswordIdentityProvider provides identities for users authenticating using htpasswd credentials
 type HTPasswdIdentityProvider struct {
 	// fileData is a reference to a secret by name containing the data to use as the htpasswd file.
 	// The key "htpasswd" is used to locate the data.
-	FileData string `json:"fileData"`
+	// If the secret or expected key is not found, the identity provider is not honored.
+	FileData OAuthSecretReference `json:"fileData"`
 }
 
 // LDAPPasswordIdentityProvider provides identities for users authenticating using LDAP credentials
@@ -275,8 +282,9 @@ type LDAPIdentityProvider struct {
 	// bindPassword is a reference to a secret by name containing an optional password to bind
 	// with during the search phase.
 	// The key "bindPassword" is used to locate the data.
+	// If specified and the secret or expected key is not found, the identity provider is not honored.
 	// +optional
-	BindPassword string `json:"bindPassword"`
+	BindPassword OAuthSecretReference `json:"bindPassword"`
 
 	// insecure, if true, indicates the connection should not use TLS
 	// WARNING: Should not be set to `true` with the URL scheme "ldaps://" as "ldaps://" URLs always
@@ -285,12 +293,13 @@ type LDAPIdentityProvider struct {
 	// a TLS connection using StartTLS as specified in https://tools.ietf.org/html/rfc2830.
 	Insecure bool `json:"insecure"`
 
-	// ca is a reference to a config map by name containing an optional trusted certificate authority bundle
-	// to use when making requests to the server.
+	// ca is an optional reference to a config map by name containing the PEM-encoded CA bundle.
+	// It is used as a trust anchor to validate the TLS certificate presented by the remote server.
 	// The key "ca.crt" is used to locate the data.
+	// If specified and the config map or expected key is not found, the default system roots are used.
 	// If empty, the default system roots are used.
 	// +optional
-	CA string `json:"ca"`
+	CA OAuthConfigMapReference `json:"ca"`
 
 	// attributes maps LDAP attributes to identities
 	Attributes LDAPAttributeMapping `json:"attributes"`
@@ -356,11 +365,12 @@ type RequestHeaderIdentityProvider struct {
 	// Required when challenge is set to true.
 	ChallengeURL string `json:"challengeURL"`
 
-	// ca is a reference to a config map by name with the trusted signer certs.
-	// It is used to perform verification on requests to prevent header spoofing.
+	// ca is a required reference to a config map by name containing the PEM-encoded CA bundle.
+	// It is used as a trust anchor to validate the TLS certificate presented by the remote server.
+	// Specifically, it allows verification of incoming requests to prevent header spoofing.
 	// The key "ca.crt" is used to locate the data.
-	// +optional
-	ClientCA string `json:"ca"`
+	// If the config map or expected key is not found, the identity provider is not honored.
+	ClientCA OAuthConfigMapReference `json:"ca"`
 
 	// clientCommonNames is an optional list of common names to require a match from. If empty, any
 	// client certificate validated against the clientCA bundle is considered authoritative.
@@ -387,7 +397,8 @@ type GitHubIdentityProvider struct {
 
 	// clientSecret is is a reference to the secret by name containing the oauth client secret.
 	// The key "clientSecret" is used to locate the data.
-	ClientSecret string `json:"clientSecret"`
+	// If the secret or expected key is not found, the identity provider is not honored.
+	ClientSecret OAuthSecretReference `json:"clientSecret"`
 
 	// organizations optionally restricts which organizations are allowed to log in
 	// +optional
@@ -403,13 +414,14 @@ type GitHubIdentityProvider struct {
 	// +optional
 	Hostname string `json:"hostname"`
 
-	// ca is a reference to a config map by name containing an optional trusted certificate authority bundle
-	// to use when making requests to the server.
+	// ca is an optional reference to a config map by name containing the PEM-encoded CA bundle.
+	// It is used as a trust anchor to validate the TLS certificate presented by the remote server.
 	// The key "ca.crt" is used to locate the data.
+	// If specified and the config map or expected key is not found, the default system roots are used.
 	// If empty, the default system roots are used.
 	// This can only be configured when hostname is set to a non-empty value.
 	// +optional
-	CA string `json:"ca"`
+	CA OAuthConfigMapReference `json:"ca"`
 }
 
 // GitLabIdentityProvider provides identities for users authenticating using GitLab credentials
@@ -419,17 +431,19 @@ type GitLabIdentityProvider struct {
 
 	// clientSecret is is a reference to the secret by name containing the oauth client secret.
 	// The key "clientSecret" is used to locate the data.
-	ClientSecret string `json:"clientSecret"`
+	// If the secret or expected key is not found, the identity provider is not honored.
+	ClientSecret OAuthSecretReference `json:"clientSecret"`
 
 	// url is the oauth server base URL
 	URL string `json:"url"`
 
-	// ca is a reference to a config map by name containing an optional trusted certificate authority bundle
-	// to use when making requests to the server.
+	// ca is an optional reference to a config map by name containing the PEM-encoded CA bundle.
+	// It is used as a trust anchor to validate the TLS certificate presented by the remote server.
 	// The key "ca.crt" is used to locate the data.
+	// If specified and the config map or expected key is not found, the default system roots are used.
 	// If empty, the default system roots are used.
 	// +optional
-	CA string `json:"ca"`
+	CA OAuthConfigMapReference `json:"ca"`
 }
 
 // GoogleIdentityProvider provides identities for users authenticating using Google credentials
@@ -439,7 +453,8 @@ type GoogleIdentityProvider struct {
 
 	// clientSecret is is a reference to the secret by name containing the oauth client secret.
 	// The key "clientSecret" is used to locate the data.
-	ClientSecret string `json:"clientSecret"`
+	// If the secret or expected key is not found, the identity provider is not honored.
+	ClientSecret OAuthSecretReference `json:"clientSecret"`
 
 	// hostedDomain is the optional Google App domain (e.g. "mycompany.com") to restrict logins to
 	// +optional
@@ -453,14 +468,16 @@ type OpenIDIdentityProvider struct {
 
 	// clientSecret is is a reference to the secret by name containing the oauth client secret.
 	// The key "clientSecret" is used to locate the data.
-	ClientSecret string `json:"clientSecret"`
+	// If the secret or expected key is not found, the identity provider is not honored.
+	ClientSecret OAuthSecretReference `json:"clientSecret"`
 
 	// ca is an optional reference to a config map by name containing the PEM-encoded CA bundle.
 	// It is used as a trust anchor to validate the TLS certificate presented by the remote server.
 	// The key "ca.crt" is used to locate the data.
+	// If specified and the config map or expected key is not found, the default system roots are used.
 	// If empty, the default system roots are used.
 	// +optional
-	CA string `json:"ca"`
+	CA OAuthConfigMapReference `json:"ca"`
 
 	// extraScopes are any scopes to request in addition to the standard "openid" scope.
 	// +optional
@@ -526,4 +543,16 @@ type OAuthList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []OAuth `json:"items"`
+}
+
+// OAuthConfigMapReference references a config map in the openshift-config namespace.
+type OAuthConfigMapReference struct {
+	// name is the metadata.name of the referenced config map
+	Name string `json:"name"`
+}
+
+// OAuthSecretReference references a secret in the openshift-config namespace.
+type OAuthSecretReference struct {
+	// name is the metadata.name of the referenced secret
+	Name string `json:"name"`
 }
