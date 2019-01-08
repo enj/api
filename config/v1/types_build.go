@@ -22,7 +22,7 @@ type BuildSpec struct {
 	// AdditionalTrustedCA is a reference to a ConfigMap containing additional CAs that
 	// should be trusted for image pushes and pulls during builds.
 	// +optional
-	AdditionalTrustedCA ConfigMapReference `json:"additionalTrustedCA,omitempty"`
+	AdditionalTrustedCA ConfigMapFileReference `json:"additionalTrustedCA,omitempty"`
 	// BuildDefaults controls the default information for Builds
 	// +optional
 	BuildDefaults BuildDefaults `json:"buildDefaults,omitempty"`
