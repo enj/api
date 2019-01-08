@@ -60,13 +60,22 @@ func (ClientConnectionOverrides) SwaggerDoc() map[string]string {
 	return map_ClientConnectionOverrides
 }
 
-var map_ConfigMapReference = map[string]string{
-	"":         "ConfigMapReference references a configmap in the openshift-config namespace.",
-	"filename": "Key allows pointing to a specific key/value inside of the configmap.  This is useful for logical file references.",
+var map_ConfigMapFileReference = map[string]string{
+	"":    "ConfigMapFileReference references a configmap in the openshift-config namespace.",
+	"key": "Key allows pointing to a specific key/value inside of the configmap.  This is useful for logical file references.",
 }
 
-func (ConfigMapReference) SwaggerDoc() map[string]string {
-	return map_ConfigMapReference
+func (ConfigMapFileReference) SwaggerDoc() map[string]string {
+	return map_ConfigMapFileReference
+}
+
+var map_ConfigMapNameReference = map[string]string{
+	"":     "ConfigMapNameReference references a config map in a specific namespace. If a namespace is not specified at the point of use, the openshift-config namespace is assumed.",
+	"name": "name is the metadata.name of the referenced config map",
+}
+
+func (ConfigMapNameReference) SwaggerDoc() map[string]string {
+	return map_ConfigMapNameReference
 }
 
 var map_DelegatedAuthentication = map[string]string{
@@ -162,16 +171,6 @@ func (LeaderElection) SwaggerDoc() map[string]string {
 	return map_LeaderElection
 }
 
-var map_LocalSecretReference = map[string]string{
-	"":     "LocalSecretReference references a secret within the local namespace",
-	"name": "Name of the secret in the local namespace",
-	"key":  "Key selects a specific key within the local secret. Must be a valid secret key.",
-}
-
-func (LocalSecretReference) SwaggerDoc() map[string]string {
-	return map_LocalSecretReference
-}
-
 var map_NamedCertificate = map[string]string{
 	"":      "NamedCertificate specifies a certificate/key, and the names it should be served for",
 	"names": "Names is a list of DNS names this certificate should be used to secure A name can be a normal DNS name, or can contain leading wildcard segments.",
@@ -189,6 +188,15 @@ var map_RemoteConnectionInfo = map[string]string{
 
 func (RemoteConnectionInfo) SwaggerDoc() map[string]string {
 	return map_RemoteConnectionInfo
+}
+
+var map_SecretNameReference = map[string]string{
+	"":     "SecretNameReference references a secret in a specific namespace. If a namespace is not specified at the point of use, the openshift-config namespace is assumed.",
+	"name": "name is the metadata.name of the referenced secret",
+}
+
+func (SecretNameReference) SwaggerDoc() map[string]string {
+	return map_SecretNameReference
 }
 
 var map_ServingInfo = map[string]string{
